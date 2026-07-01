@@ -1,9 +1,29 @@
-# FC 26 Optimizer — by **PEDRO RAMOS**
+<div align="center">
 
-Otimizador **profissional, seguro e modular** para o **EA SPORTS FC 26**. Foca-se em
-máximo desempenho, menos *stuttering*, mais fluidez, tempos de carregamento mais
-curtos e menor latência de input — usando **exclusivamente** ajustes oficiais do
-Windows, da GPU e das definições do próprio jogo.
+# ⚽ FC 26 Optimizer
+### by **PEDRO RAMOS**
+
+**Otimizador profissional, seguro e modular para o EA SPORTS FC 26**
+
+[![Release](https://img.shields.io/github/v/release/pepevapovapo/fifa?label=vers%C3%A3o&color=16d67a&style=for-the-badge)](https://github.com/pepevapovapo/fifa/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/pepevapovapo/fifa/total?label=downloads&color=f5c542&style=for-the-badge)](https://github.com/pepevapovapo/fifa/releases/latest)
+[![Platform](https://img.shields.io/badge/plataforma-Windows%2010%2F11-0aa85e?style=for-the-badge&logo=windows)](https://github.com/pepevapovapo/fifa/releases/latest)
+[![Ban Risk](https://img.shields.io/badge/risco%20de%20ban-0%25-16d67a?style=for-the-badge)](#-0-risco-de-ban--garantido-por-design)
+[![License](https://img.shields.io/badge/licença-MIT-8896ad?style=for-the-badge)](#)
+
+<br>
+
+### 📥 [**DESCARREGAR FC 26 OPTIMIZER**](https://github.com/pepevapovapo/fifa/releases/latest/download/FC26-Optimizer-Setup.exe)
+
+*(Windows 10/11 · instalador `.exe` · basta descarregar e instalar)*
+
+</div>
+
+---
+
+Foca-se em máximo desempenho, menos *stuttering*, mais fluidez, tempos de
+carregamento mais curtos e menor latência de input — usando **exclusivamente**
+ajustes oficiais do Windows, da GPU e das definições do próprio jogo.
 
 > ## 🛡️ 0% RISCO DE BAN — GARANTIDO POR DESIGN
 > Este software **nunca** acede à memória do jogo, **nunca** injeta código, DLLs,
@@ -35,25 +55,33 @@ Windows, da GPU e das definições do próprio jogo.
 
 ## 🚀 Como usar
 
-Requer **Windows 10/11** e **Node.js 18+** (para desenvolvimento).
+### Opção 1 — Instalar (recomendado)
 
-```bash
-npm install      # instalar dependências
-npm start        # iniciar a aplicação
-npm run lint     # validar a segurança do catálogo de otimizações
-npm run dist     # gerar o instalador Windows (NSIS)
-```
+1. [**Descarrega o instalador**](https://github.com/pepevapovapo/fifa/releases/latest/download/FC26-Optimizer-Setup.exe) mais recente.
+2. Faz duplo-clique em `FC26-Optimizer-Setup.exe` e segue os passos.
+3. Abre o **FC 26 Optimizer** — aceita o pedido de Administrador do Windows.
 
 > A app pede privilégios de **Administrador** porque algumas otimizações escrevem
 > em `HKLM` e configuram serviços do Windows. Sem admin, os ajustes de utilizador
 > (`HKCU`) e a limpeza de caches continuam a funcionar.
 
-1. Abre a app e clica em **Analisar Jogo**.
-2. Escolhe um **Perfil** (recomendado: *Equilibrado*) ou seleciona otimizações
+4. Clica em **Analisar Jogo**.
+5. Escolhe um **Perfil** (recomendado: *Equilibrado*) ou seleciona otimizações
    individuais no separador **Otimizações**.
-3. Clica em **Otimizar Agora**. Um ponto de restauro é criado automaticamente.
-4. Podes **Reverter Tudo** ou restaurar um ponto no separador **Backups** a
+6. Clica em **Otimizar Agora**. Um ponto de restauro é criado automaticamente.
+7. Podes **Reverter Tudo** ou restaurar um ponto no separador **Backups** a
    qualquer momento.
+
+### Opção 2 — Compilar a partir do código-fonte
+
+Requer **Node.js 18+**. Ver instruções detalhadas em [BUILDING.md](BUILDING.md).
+
+```bash
+npm install      # instalar dependências
+npm start        # iniciar a aplicação em modo de desenvolvimento
+npm run lint     # validar a segurança do catálogo de otimizações
+npm run dist     # gerar o instalador Windows (NSIS)
+```
 
 ---
 

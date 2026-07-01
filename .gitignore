@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.env
+.cache/
+# Runtime data produced on the user's machine
+userdata/
+backups/
+logs/

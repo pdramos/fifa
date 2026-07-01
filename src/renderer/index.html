@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FC 26 Optimizer — PEDRO RAMOS</title>
+    <link rel="stylesheet" href="styles/app.css" />
+  </head>
+  <body>
+    <!-- ═══════════════ Custom title bar ═══════════════ -->
+    <header class="titlebar">
+      <div class="titlebar__brand">
+        <div class="logo-mark">PR</div>
+        <div class="titlebar__title">
+          <strong>FC&nbsp;26 OPTIMIZER</strong>
+          <span class="titlebar__by">by <b>PEDRO RAMOS</b></span>
+        </div>
+        <span class="badge badge--safe" title="Sem risco de ban">🛡️ 0% BAN</span>
+      </div>
+      <div class="titlebar__drag"></div>
+      <div class="titlebar__controls">
+        <button class="winbtn" id="btn-min" title="Minimizar">&#8211;</button>
+        <button class="winbtn" id="btn-max" title="Maximizar">&#9633;</button>
+        <button class="winbtn winbtn--close" id="btn-close" title="Fechar">&#10005;</button>
+      </div>
+    </header>
+
+    <div class="app">
+      <!-- ═══════════════ Sidebar ═══════════════ -->
+      <nav class="sidebar">
+        <div class="sidebar__hero">
+          <div class="pr-emblem">
+            <span>PEDRO</span>
+            <span class="pr-emblem__big">RAMOS</span>
+          </div>
+        </div>
+        <button class="nav-item is-active" data-view="analysis">
+          <span class="nav-item__ic">📊</span> Análise
+        </button>
+        <button class="nav-item" data-view="optimizations">
+          <span class="nav-item__ic">⚡</span> Otimizações
+        </button>
+        <button class="nav-item" data-view="profiles">
+          <span class="nav-item__ic">🎛️</span> Perfis
+        </button>
+        <button class="nav-item" data-view="backups">
+          <span class="nav-item__ic">💾</span> Backups
+        </button>
+        <button class="nav-item" data-view="recommendations">
+          <span class="nav-item__ic">📌</span> Manuais
+        </button>
+        <button class="nav-item" data-view="logs">
+          <span class="nav-item__ic">📝</span> Logs
+        </button>
+        <button class="nav-item" data-view="about">
+          <span class="nav-item__ic">⚙️</span> Sobre
+        </button>
+        <div class="sidebar__footer">
+          <div class="admin-pill" id="admin-pill">A verificar privilégios…</div>
+          <div class="ver" id="app-version">v—</div>
+        </div>
+      </nav>
+
+      <!-- ═══════════════ Main content ═══════════════ -->
+      <main class="content">
+        <!-- Global progress bar -->
+        <div class="progress-wrap" id="progress-wrap" hidden>
+          <div class="progress-info">
+            <span id="progress-label">A trabalhar…</span>
+            <span id="progress-count">0 / 0</span>
+          </div>
+          <div class="progress-bar"><div class="progress-bar__fill" id="progress-fill"></div></div>
+        </div>
+
+        <!-- ── View: Análise ── -->
+        <section class="view is-active" data-view="analysis">
+          <div class="view__head">
+            <h1>Análise do Sistema</h1>
+            <button class="btn btn--primary btn--lg" id="btn-analyze">🔍 Analisar Jogo</button>
+          </div>
+
+          <div class="cards" id="analysis-cards">
+            <div class="card card--placeholder" id="analysis-empty">
+              <div class="card__big-ic">🎮</div>
+              <h3>Pronto para otimizar o EA SPORTS FC 26</h3>
+              <p>
+                Clica em <b>Analisar Jogo</b> para detetar a instalação, examinar o hardware e
+                verificar quais otimizações seguras estão disponíveis.
+              </p>
+              <p class="muted">
+                Todas as otimizações são oficiais, reversíveis e <b>não têm qualquer risco de
+                ban</b> — nunca acedem à memória do jogo nem ao anti-cheat.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid-2" id="analysis-detail" hidden>
+            <div class="card">
+              <h3 class="card__title">🎮 Instalação do Jogo</h3>
+              <dl class="kv" id="game-kv"></dl>
+            </div>
+            <div class="card">
+              <h3 class="card__title">🖥️ Diagnóstico do Sistema</h3>
+              <dl class="kv" id="system-kv"></dl>
+            </div>
+          </div>
+
+          <div class="summary-bar" id="summary-bar" hidden>
+            <div class="summary-stat">
+              <b id="stat-available">0</b><span>Disponíveis</span>
+            </div>
+            <div class="summary-stat"><b id="stat-applied">0</b><span>Aplicadas</span></div>
+            <div class="summary-stat"><b id="stat-recommended">0</b><span>Recomendadas</span></div>
+            <div class="summary-actions">
+              <button class="btn btn--primary" id="btn-quick-optimize">⚡ Otimizar Agora</button>
+              <button class="btn btn--ghost" id="btn-quick-revert">↩️ Reverter Tudo</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── View: Otimizações ── -->
+        <section class="view" data-view="optimizations">
+          <div class="view__head">
+            <h1>Otimizações</h1>
+            <div class="view__head-actions">
+              <button class="btn btn--ghost" id="btn-select-recommended">Selecionar recomendadas</button>
+              <button class="btn btn--ghost" id="btn-select-none">Limpar</button>
+              <button class="btn btn--primary" id="btn-apply-selected">Aplicar selecionadas</button>
+            </div>
+          </div>
+          <div id="opt-groups" class="opt-groups">
+            <p class="muted center">Executa a análise primeiro para ver as otimizações disponíveis.</p>
+          </div>
+        </section>
+
+        <!-- ── View: Perfis ── -->
+        <section class="view" data-view="profiles">
+          <div class="view__head"><h1>Perfis de Otimização</h1></div>
+          <div class="profile-grid" id="profile-grid"></div>
+          <div class="card card--form" id="custom-profile-card">
+            <h3 class="card__title">⭐ Criar perfil personalizado</h3>
+            <p class="muted">Seleciona otimizações no separador "Otimizações" e guarda-as como um perfil reutilizável.</p>
+            <div class="form-row">
+              <input type="text" id="custom-name" placeholder="Nome do perfil" />
+              <button class="btn btn--primary" id="btn-save-profile">Guardar seleção atual</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── View: Backups ── -->
+        <section class="view" data-view="backups">
+          <div class="view__head">
+            <h1>Backups & Restauro</h1>
+            <button class="btn btn--primary" id="btn-create-backup">➕ Criar ponto de restauro</button>
+          </div>
+          <p class="muted">
+            Cada otimização é guardada com o valor original. Podes restaurar tudo com um clique a
+            qualquer momento.
+          </p>
+          <div id="backups-list" class="backups-list"></div>
+        </section>
+
+        <!-- ── View: Recomendações manuais ── -->
+        <section class="view" data-view="recommendations">
+          <div class="view__head"><h1>Recomendações Manuais</h1></div>
+          <p class="muted">
+            Otimizações de alto impacto que devem ser feitas manualmente (painel da GPU, router,
+            SSD). Reunidas dos melhores guias e fóruns. Nenhuma envolve risco de ban.
+          </p>
+          <div id="manual-list" class="manual-list"></div>
+        </section>
+
+        <!-- ── View: Logs ── -->
+        <section class="view" data-view="logs">
+          <div class="view__head">
+            <h1>Registos</h1>
+            <div class="view__head-actions">
+              <button class="btn btn--ghost" id="btn-open-logs">Abrir pasta</button>
+              <button class="btn btn--ghost" id="btn-clear-logs">Limpar vista</button>
+            </div>
+          </div>
+          <div class="logbox" id="logbox"></div>
+        </section>
+
+        <!-- ── View: Sobre / Atualizações ── -->
+        <section class="view" data-view="about">
+          <div class="view__head"><h1>Sobre & Atualizações</h1></div>
+          <div class="card about-card">
+            <div class="pr-emblem pr-emblem--xl">
+              <span>PEDRO</span><span class="pr-emblem__big">RAMOS</span>
+            </div>
+            <h2>FC 26 Optimizer</h2>
+            <p class="muted">Otimizador profissional, seguro e modular para EA SPORTS FC 26.</p>
+            <div class="update-row">
+              <span id="update-status">Versão <b id="about-version">—</b></span>
+              <button class="btn btn--primary" id="btn-check-update">Procurar atualizações</button>
+              <button class="btn btn--primary" id="btn-install-update" hidden>Instalar e reiniciar</button>
+            </div>
+            <div class="safety-note">
+              <h4>🛡️ Garantia de segurança — 0% risco de ban</h4>
+              <ul>
+                <li>Só usa definições oficiais do Windows, da GPU e do próprio jogo.</li>
+                <li>Nunca acede à memória do jogo, nem injeta código, DLLs, hooks ou drivers.</li>
+                <li>Nunca interage com o EA Anti-Cheat.</li>
+                <li>Tudo é reversível com um clique, com backups automáticos.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toasts" id="toasts"></div>
+
+    <script src="scripts/app.js"></script>
+  </body>
+</html>

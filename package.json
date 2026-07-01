@@ -1,0 +1,59 @@
+{
+  "name": "fc26-optimizer",
+  "productName": "FC 26 Optimizer — by PEDRO RAMOS",
+  "version": "1.0.0",
+  "description": "Otimizador profissional, seguro e modular para EA SPORTS FC 26. 0% risco de ban — apenas ajustes oficiais de Windows e das definições do próprio jogo.",
+  "author": {
+    "name": "PEDRO RAMOS"
+  },
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "lint": "node scripts/validate-optimizations.js",
+    "dist": "electron-builder",
+    "pack": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.pedroramos.fc26optimizer",
+    "productName": "FC26 Optimizer",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "FC26 Optimizer"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "pepevapovapo",
+        "repo": "fifa"
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.2.1"
+  }
+}

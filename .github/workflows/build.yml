@@ -44,7 +44,10 @@ jobs:
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
           name: "FC 26 Optimizer ${{ steps.vars.outputs.tag }}"
-          files: dist/FC26-Optimizer-Setup.exe
+          files: |
+            dist/FC26-Optimizer-Setup.exe
+            dist/FC26-Optimizer-Setup.exe.blockmap
+            dist/latest.yml
           draft: false
           prerelease: false
         env:

@@ -45,23 +45,65 @@ function regValuesEqual(type, a, b) {
 }
 
 const registryExec = {
+  /**
+   * Normalize an optimization to a list of registry writes. Supports both the
+   * single-value form (opt.key/valueName/valueType/applyData) and a multi-value
+   * form (opt.values = [{ key?, valueName, valueType, applyData }]) so one
+   * logical tweak can flip several related values atomically — still fully
+   * reversible, since each prior value is snapshotted.
+   */
+  _pairs(opt) {
+    if (Array.isArray(opt.values) && opt.values.length) {
+      return opt.values.map((v) => ({
+        key: v.key || opt.key,
+        valueName: v.valueName,
+        valueType: v.valueType,
+        applyData: v.applyData,
+      }));
+    }
+    return [
+      { key: opt.key, valueName: opt.valueName, valueType: opt.valueType, applyData: opt.applyData },
+    ];
+  },
   async status(opt) {
-    const cur = await regRead(opt.key, opt.valueName);
-    const applied = cur.exists && regValuesEqual(opt.valueType, cur.value, opt.applyData);
-    return { applied, current: cur.exists ? cur.value : null };
+    const pairs = this._pairs(opt);
+    const current = {};
+    let applied = true;
+    for (const p of pairs) {
+      const cur = await regRead(p.key, p.valueName);
+      if (!(cur.exists && regValuesEqual(p.valueType, cur.value, p.applyData))) applied = false;
+      current[p.valueName] = cur.exists ? cur.value : null;
+    }
+    return { applied, current: pairs.length === 1 ? current[pairs[0].valueName] : current };
   },
   async apply(opt) {
-    const prev = await regRead(opt.key, opt.valueName);
-    const res = await regWrite(opt.key, opt.valueName, opt.valueType, opt.applyData);
-    if (!res.ok && !res.skipped) throw new Error(`reg write failed: ${res.stderr || res.code}`);
-    return {
-      existed: prev.exists,
-      type: prev.type || opt.valueType,
-      value: prev.exists ? prev.value : null,
-    };
+    const pairs = this._pairs(opt);
+    const entries = [];
+    for (const p of pairs) {
+      const prev = await regRead(p.key, p.valueName);
+      const res = await regWrite(p.key, p.valueName, p.valueType, p.applyData);
+      if (!res.ok && !res.skipped) throw new Error(`reg write failed: ${res.stderr || res.code}`);
+      entries.push({
+        key: p.key,
+        valueName: p.valueName,
+        existed: prev.exists,
+        type: prev.type || p.valueType,
+        value: prev.exists ? prev.value : null,
+      });
+    }
+    return { multi: true, entries };
   },
   async revert(opt, backup) {
     if (!backup) return;
+    // New multi-value backup shape.
+    if (Array.isArray(backup.entries)) {
+      for (const b of backup.entries) {
+        if (b.existed) await regWrite(b.key, b.valueName, b.type || 'REG_SZ', b.value);
+        else await regDelete(b.key, b.valueName);
+      }
+      return;
+    }
+    // Legacy single-value backup shape (state saved by older versions).
     if (backup.existed) {
       await regWrite(opt.key, opt.valueName, backup.type || opt.valueType, backup.value);
     } else {

@@ -37,9 +37,19 @@ for (const opt of catalog) {
 
   // Type-specific required fields.
   if (opt.type === 'registry') {
-    if (!opt.key) errors.push(`${where} (registry) sem key.`);
-    if (!opt.valueName) errors.push(`${where} (registry) sem valueName.`);
-    if (!opt.valueType) errors.push(`${where} (registry) sem valueType.`);
+    if (Array.isArray(opt.values)) {
+      // Multi-value form: each entry needs its own (or an inherited) key + type.
+      if (!opt.values.length) errors.push(`${where} (registry) tem values vazio.`);
+      opt.values.forEach((v, i) => {
+        if (!(v.key || opt.key)) errors.push(`${where} (registry) values[${i}] sem key.`);
+        if (!v.valueName) errors.push(`${where} (registry) values[${i}] sem valueName.`);
+        if (!v.valueType) errors.push(`${where} (registry) values[${i}] sem valueType.`);
+      });
+    } else {
+      if (!opt.key) errors.push(`${where} (registry) sem key.`);
+      if (!opt.valueName) errors.push(`${where} (registry) sem valueName.`);
+      if (!opt.valueType) errors.push(`${where} (registry) sem valueType.`);
+    }
   }
   if (opt.type === 'service' && !opt.serviceName) errors.push(`${where} (service) sem serviceName.`);
   if (opt.type === 'command' && !opt.applyCmd) errors.push(`${where} (command) sem applyCmd.`);

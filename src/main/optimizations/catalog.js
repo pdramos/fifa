@@ -32,6 +32,7 @@ const CATEGORIES = {
   cleanup: 'Limpeza',
   system: 'Sistema',
   storage: 'Armazenamento',
+  input: 'Rato & Input',
 };
 
 const catalog = [
@@ -159,6 +160,51 @@ const catalog = [
     applyData: '~ DISABLEDXMAXIMIZEDWINDOWEDMODE',
     requires: (ctx) => Boolean(ctx.game && ctx.game.executable),
   },
+  {
+    id: 'win-gamebar-full-off',
+    name: 'Desligar completamente a Xbox Game Bar',
+    description:
+      'Desativa o painel de arranque e o serviço Nexus da Game Bar, eliminando o overlay que consome recursos e adiciona latência de input.',
+    category: 'windows',
+    impact: 'low',
+    default: true,
+    type: 'registry',
+    values: [
+      { key: 'HKCU\\Software\\Microsoft\\GameBar', valueName: 'ShowStartupPanel', valueType: 'REG_DWORD', applyData: '0' },
+      { key: 'HKCU\\Software\\Microsoft\\GameBar', valueName: 'UseNexusForGameBarEnabled', valueType: 'REG_DWORD', applyData: '0' },
+    ],
+  },
+  {
+    id: 'win-startup-delay-off',
+    name: 'Remover atraso de arranque de aplicações',
+    description:
+      'Elimina o atraso artificial que o Windows impõe ao iniciar aplicações no arranque, tornando o sistema utilizável mais depressa.',
+    category: 'windows',
+    impact: 'low',
+    default: true,
+    type: 'registry',
+    key: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize',
+    valueName: 'StartupDelayInMSec',
+    valueType: 'REG_DWORD',
+    applyData: '0',
+  },
+  {
+    id: 'win-fse-global',
+    name: 'Preferir ecrã inteiro exclusivo (global)',
+    description:
+      'Define as flags do Windows para respeitar o modo de ecrã inteiro exclusivo dos jogos (menor latência do compositor). Pode não ser ideal em setups borderless com VRR/G-Sync.',
+    category: 'windows',
+    impact: 'medium',
+    default: false,
+    caution: true,
+    type: 'registry',
+    values: [
+      { key: 'HKCU\\System\\GameConfigStore', valueName: 'GameDVR_FSEBehaviorMode', valueType: 'REG_DWORD', applyData: '2' },
+      { key: 'HKCU\\System\\GameConfigStore', valueName: 'GameDVR_HonorUserFSEBehaviorMode', valueType: 'REG_DWORD', applyData: '1' },
+      { key: 'HKCU\\System\\GameConfigStore', valueName: 'GameDVR_DXGIHonorFSEWindowsCompatible', valueType: 'REG_DWORD', applyData: '1' },
+      { key: 'HKCU\\System\\GameConfigStore', valueName: 'GameDVR_EFSEFeatureFlags', valueType: 'REG_DWORD', applyData: '0' },
+    ],
+  },
 
   /* ──────────────────────────────── System (MMCSS / scheduler) ────────── */
   {
@@ -266,6 +312,99 @@ const catalog = [
     valueType: 'REG_DWORD',
     applyData: '3',
   },
+  {
+    id: 'sys-win32-priority-separation',
+    name: 'Otimizar prioridade da aplicação em primeiro plano',
+    description:
+      'Configura o Win32PrioritySeparation para dar um impulso de CPU curto e variável à janela ativa (o jogo), melhorando a consistência dos frames. Ajuste oficial do agendador do Windows.',
+    category: 'system',
+    impact: 'medium',
+    default: true,
+    needsAdmin: true,
+    type: 'registry',
+    key: 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl',
+    valueName: 'Win32PrioritySeparation',
+    valueType: 'REG_DWORD',
+    applyData: '38',
+  },
+  {
+    id: 'sys-mmcss-games-category',
+    name: 'Categoria de agendamento "High" para jogos (MMCSS)',
+    description:
+      'Eleva a categoria de agendamento e a prioridade de I/O do perfil "Games" do Windows para "High". Complementa a prioridade de GPU/CPU. Ajuste oficial do MMCSS.',
+    category: 'system',
+    impact: 'medium',
+    default: true,
+    needsAdmin: true,
+    type: 'registry',
+    key: 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games',
+    values: [
+      { valueName: 'Scheduling Category', valueType: 'REG_SZ', applyData: 'High' },
+      { valueName: 'SFIO Priority', valueType: 'REG_SZ', applyData: 'High' },
+    ],
+  },
+  {
+    id: 'sys-background-apps-off',
+    name: 'Desativar aplicações em segundo plano (UWP)',
+    description:
+      'Impede que as apps da Microsoft Store corram em segundo plano a consumir CPU, RAM e rede durante o jogo.',
+    category: 'system',
+    impact: 'medium',
+    default: true,
+    type: 'registry',
+    values: [
+      { key: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications', valueName: 'GlobalUserDisabled', valueType: 'REG_DWORD', applyData: '1' },
+      { key: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Search', valueName: 'BackgroundAppGlobalToggle', valueType: 'REG_DWORD', applyData: '0' },
+    ],
+  },
+  {
+    id: 'sys-telemetry-min',
+    name: 'Reduzir telemetria e recolha de dados',
+    description:
+      'Baixa a telemetria do Windows para o mínimo, reduzindo tarefas e tráfego em segundo plano. Definição oficial de política do Windows (totalmente reversível).',
+    category: 'system',
+    impact: 'low',
+    default: true,
+    needsAdmin: true,
+    type: 'registry',
+    key: 'HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection',
+    valueName: 'AllowTelemetry',
+    valueType: 'REG_DWORD',
+    applyData: '0',
+  },
+  {
+    id: 'sys-hibernate-off',
+    name: 'Desativar hibernação e Arranque Rápido',
+    description:
+      'Desliga a hibernação (e o "Fast Startup" associado), que pode causar estados de driver inconsistentes entre sessões e ocupa vários GB em disco. Reversível com um clique.',
+    category: 'system',
+    impact: 'low',
+    default: false,
+    caution: true,
+    needsAdmin: true,
+    type: 'command',
+    applyCmd: { cmd: 'powercfg', args: ['/hibernate', 'off'] },
+    revertCmd: { cmd: 'powercfg', args: ['/hibernate', 'on'] },
+  },
+
+  /* ──────────────────────────────── Rato & Input ──────────────────────── */
+  {
+    id: 'input-mouse-accel-off',
+    name: 'Desativar aceleração do rato (input 1:1)',
+    description:
+      'Desliga a "melhoria da precisão do ponteiro" do Windows para um movimento de rato consistente e previsível nos menus e na jogabilidade. Reversível.',
+    category: 'input',
+    impact: 'low',
+    default: false,
+    caution: true,
+    type: 'registry',
+    key: 'HKCU\\Control Panel\\Mouse',
+    values: [
+      { valueName: 'MouseSpeed', valueType: 'REG_SZ', applyData: '0' },
+      { valueName: 'MouseThreshold1', valueType: 'REG_SZ', applyData: '0' },
+      { valueName: 'MouseThreshold2', valueType: 'REG_SZ', applyData: '0' },
+    ],
+  },
 
   /* ──────────────────────────────── Rede ──────────────────────────────── */
   {
@@ -323,6 +462,21 @@ const catalog = [
     settings: { MSAA_LEVEL: '0' },
     addIfMissing: false,
     requires: (ctx) => Boolean(ctx.game && ctx.game.settingsDir),
+  },
+  {
+    id: 'game-gpu-preference',
+    name: 'Forçar GPU dedicada + Alto Desempenho para o FC 26',
+    description:
+      'Regista o FC 26 nas Definições Gráficas do Windows com preferência "Alto desempenho", garantindo que usa a GPU dedicada (essencial em portáteis com gráficos integrados + dedicados). Definição 100% oficial.',
+    category: 'game',
+    impact: 'high',
+    default: true,
+    type: 'registry',
+    key: 'HKCU\\Software\\Microsoft\\DirectX\\UserGpuPreferences',
+    valueName: (ctx) => ctx.game && ctx.game.executable,
+    valueType: 'REG_SZ',
+    applyData: 'GpuPreference=2;',
+    requires: (ctx) => Boolean(ctx.game && ctx.game.executable),
   },
 
   /* ──────────────────────────────── Limpeza ───────────────────────────── */
@@ -386,6 +540,40 @@ const catalog = [
       '%LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\Logs',
     ],
   },
+  {
+    id: 'clean-crash-dumps',
+    name: 'Limpar despejos de falhas (crash dumps)',
+    description:
+      'Remove ficheiros de despejo de memória de aplicações que falharam, libertando espaço. Regenerados apenas quando algo volta a falhar.',
+    category: 'cleanup',
+    impact: 'low',
+    default: true,
+    type: 'cleanup',
+    targets: ['%LOCALAPPDATA%\\CrashDumps'],
+  },
+  {
+    id: 'clean-windows-temp',
+    name: 'Limpar ficheiros temporários do Windows',
+    description:
+      'Esvazia a pasta de temporários do sistema (C:\\Windows\\Temp). Requer administrador; ficheiros em uso são ignorados em segurança.',
+    category: 'cleanup',
+    impact: 'low',
+    default: true,
+    needsAdmin: true,
+    type: 'cleanup',
+    targets: ['C:\\Windows\\Temp'],
+  },
+  {
+    id: 'clean-dx-shadercache-store',
+    name: 'Limpar cache de shaders da Microsoft Store/UWP',
+    description:
+      'Remove a cache de compilação de shaders partilhada do Windows (GLCache/D3D) que pode acumular entradas obsoletas. Regenera-se automaticamente.',
+    category: 'cleanup',
+    impact: 'low',
+    default: true,
+    type: 'cleanup',
+    targets: ['%LOCALAPPDATA%\\Microsoft\\DirectX Shader Cache'],
+  },
 ];
 
 /**
@@ -429,13 +617,41 @@ const manualRecommendations = [
     category: 'game',
     name: 'Definições gráficas dentro do jogo (recomendadas)',
     steps: [
-      'Oclusão de ambiente: Baixa (maior ganho de FPS com impacto visual mínimo)',
-      'Escala de renderização: 100% (reduzir em passos de 10% só se não aguentar o cap)',
-      'Cabelo baseado em fios (Strand hair): Desligado',
-      'Motion blur: Desligado',
-      'Ray tracing: Desligado',
-      'Detalhe de multidão/relva: Médio',
-      'Limite de FPS: ~90, ou refresh − 3 com VRR (a engine do FC fica instável acima de ~120 FPS)',
+      'Modo de ecrã: Ecrã inteiro (exclusivo) para menor latência — usa "Sem margens" (borderless) apenas se precisares de alt-tab rápido com VRR',
+      'Resolução: nativa do monitor (não reduzas a resolução, reduz a "Escala de renderização")',
+      'Oclusão de ambiente (SSAO): Baixa (maior ganho de FPS com impacto visual mínimo)',
+      'Escala de renderização: 100% (reduz em passos de 10% só se não aguentares o cap de FPS)',
+      'Cabelo baseado em fios (Strand hair): Desligado (custo de GPU alto)',
+      'Motion blur: Desligado (mais nitidez e menos input lag percecionado)',
+      'Ray tracing: Desligado (grande ganho de FPS no FC 26)',
+      'Detalhe de multidão / qualidade da relva: Médio',
+      'Qualidade de sombras/reflexos: Médio (as sombras são das definições mais pesadas)',
+      'Limite de FPS: ~90–120, ou refresh − 3 com VRR (a engine do FC pode ficar instável em FPS muito altos)',
+      'Anti-aliasing: TAA (bom equilíbrio) — evita MSAA alto, que é muito pesado',
+    ],
+  },
+  {
+    id: 'game-launcher-eaapp',
+    category: 'game',
+    name: 'EA app / launcher — reduzir sobrecarga',
+    steps: [
+      'Definições da EA app → Aplicação → desliga "Iniciar o EA no arranque do Windows"',
+      'Desliga o overlay da EA (In-Game Overlay) nas definições da EA app — reduz stuttering e input lag',
+      'Fecha a EA app e o browser antes de jogar (libertam RAM e CPU)',
+      'Verifica a integridade dos ficheiros do jogo pela EA app se tiveres crashes (Reparar) — é oficial e seguro',
+      'No Steam/Epic: desativa igualmente o respetivo overlay para o FC 26',
+    ],
+  },
+  {
+    id: 'game-overlays-off',
+    category: 'game',
+    name: 'Desligar overlays em segundo plano (grande contra stuttering)',
+    steps: [
+      'NVIDIA App / GeForce Experience: desliga o "In-Game Overlay"',
+      'Discord: Definições → Overlay de jogo → Desligado (causa comum de micro-stutter)',
+      'Xbox Game Bar: Win+G → desliga (ou usa a otimização automática nesta app)',
+      'Steam / Epic / EA: desliga o overlay dentro de cada launcher',
+      'MSI Afterburner / RivaTuner: mantém só se precisares de monitorização; overlays de OSD podem custar frames',
     ],
   },
   {
@@ -446,6 +662,32 @@ const manualRecommendations = [
       'Usar cabo Ethernet em vez de Wi-Fi (elimina 10–50 ms + perda de pacotes)',
       'DNS rápido: 1.1.1.1 / 1.0.0.1 (Cloudflare) ou 8.8.8.8 / 8.8.4.4 (Google)',
       'Ativar QoS no router para priorizar o PC de jogo',
+      'Desativar o algoritmo de Nagle (TcpAckFrequency=1) na tua placa de rede pode reduzir a latência online — só se souberes identificar o teu adaptador',
+      'Fechar downloads/streams/atualizações (Steam, Windows Update) durante as partidas online',
+    ],
+  },
+  {
+    id: 'display-monitor',
+    category: 'system',
+    name: 'Monitor & ecrã — configuração para jogo',
+    steps: [
+      'Define a taxa de atualização máxima do monitor no Windows (Definições → Ecrã → Ecrã avançado)',
+      'Ativa G-Sync (NVIDIA) ou FreeSync (AMD) no painel do driver e no OSD do monitor',
+      'Usa a resolução nativa do monitor',
+      'Desliga o HDR se causar cores lavadas ou stutter (a menos que o monitor tenha bom HDR)',
+      'No OSD do monitor: ativa o modo de baixa latência / "Game Mode" e desliga pós-processamento pesado',
+    ],
+  },
+  {
+    id: 'background-startup',
+    category: 'system',
+    name: 'Processos em segundo plano & arranque',
+    steps: [
+      'Gestor de Tarefas → Arranque: desativa apps que não precisas no arranque (launchers, RGB, atualizadores)',
+      'Fecha browsers, Discord e apps de captura antes de jogar (RAM e CPU)',
+      'Desinstala "bloatware" e barras de ferramentas que corram serviços em segundo plano',
+      'Mantém o Windows e os drivers da GPU atualizados (correções de desempenho e estabilidade)',
+      'Faz uma limpeza de disco e mantém pelo menos 10–15% do SSD livre para desempenho ótimo',
     ],
   },
   {

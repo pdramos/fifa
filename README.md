@@ -38,8 +38,8 @@ ajustes oficiais do Windows, da GPU e das definições do próprio jogo.
 
 - **Análise automática** — deteta o FC 26 (EA app, Steam, Epic), localiza o
   `fcsetup` e faz o diagnóstico do hardware (CPU, RAM, GPU, plano de energia).
-- **Motor de otimizações modular** — 25+ otimizações seguras, orientadas a dados,
-  organizadas por categoria (Windows, Sistema, Rede, Jogo, Limpeza).
+- **Motor de otimizações modular** — 35+ otimizações seguras, orientadas a dados,
+  organizadas por categoria (Windows, Sistema, Rede, Jogo, Rato & Input, Limpeza).
 - **Perfis** — Seguro, Equilibrado, Desempenho Máximo, Competitivo (online) e
   Tudo (avançado), além de **perfis personalizados**.
 - **Backups & Restauro** — cada alteração guarda o valor original; pontos de
@@ -135,12 +135,13 @@ src/
 
 | Categoria | Exemplos |
 |---|---|
-| **Windows** | Modo de Jogo, HAGS, plano *Desempenho Máximo*, efeitos visuais, Game Bar/DVR, notificações, otimizações de ecrã inteiro |
-| **Sistema** | Perfil MMCSS de jogos, System Responsiveness, Power Throttling, SysMain, prioridade de CPU do FC 26 (via Windows) |
+| **Windows** | Modo de Jogo, HAGS, plano *Desempenho Máximo*, efeitos visuais, Game Bar/DVR, notificações, ecrã inteiro exclusivo, atraso de arranque |
+| **Sistema** | Perfil MMCSS de jogos (categoria *High*), System Responsiveness, Power Throttling, SysMain, prioridade de CPU do FC 26, `Win32PrioritySeparation`, apps em segundo plano, telemetria, hibernação/Fast Startup |
 | **Rede** | Limpar DNS, TCP auto-tuning |
-| **Jogo (FC 26)** | V-Sync e MSAA no `fcsetup` (com backup) |
-| **Limpeza** | Cache de shaders DirectX/NVIDIA/AMD, temporários, cache da app EA |
-| **Manuais** | Painel NVIDIA/AMD, DNS rápido, SSD, indexação, DDU, reparação do EAAC |
+| **Jogo (FC 26)** | GPU dedicada + *Alto Desempenho* para o FC 26, V-Sync e MSAA no `fcsetup` (com backup) |
+| **Rato & Input** | Desativar aceleração do rato (input 1:1) |
+| **Limpeza** | Cache de shaders DirectX/NVIDIA/AMD, cache da Store/UWP, temporários, crash dumps, cache da app EA |
+| **Manuais** | Definições in-game do FC 26, EA app/overlays, monitor/VRR, processos em segundo plano, painel NVIDIA/AMD, DNS rápido, SSD, DDU, reparação do EAAC |
 
 ---
 

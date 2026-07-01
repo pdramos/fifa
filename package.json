@@ -39,7 +39,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "FC26 Optimizer"
+      "shortcutName": "FC26 Optimizer",
+      "artifactName": "FC26-Optimizer-Setup.exe"
     },
     "publish": [
       {

@@ -35,6 +35,11 @@ const CATEGORIES = {
   input: 'Rato & Input',
 };
 
+/** Escape a value for safe interpolation inside a single-quoted PowerShell string. */
+function psEscape(s) {
+  return String(s || '').replace(/'/g, "''");
+}
+
 const catalog = [
   /* ───────────────────────────── Windows OS ───────────────────────────── */
   {
@@ -146,10 +151,10 @@ const catalog = [
   },
   {
     id: 'win-fso-per-exe',
-    name: 'Desativar otimizações de ecrã inteiro para o FC 26',
+    name: 'Camadas de compatibilidade do FC26.exe (ecrã inteiro + DPI)',
     description:
-      'Força ecrã inteiro exclusivo para o executável do jogo, reduzindo a latência do compositor. Pode não ser ideal em setups borderless com VRR.',
-    category: 'windows',
+      'Força ecrã inteiro exclusivo para o executável do jogo (menor latência do compositor) e desativa o escalamento automático de DPI do Windows (evita imagem desfocada/input impreciso em ecrãs com escala >100%). Pode não ser ideal em setups borderless com VRR.',
+    category: 'game',
     impact: 'medium',
     default: false,
     caution: true,
@@ -157,7 +162,7 @@ const catalog = [
     key: 'HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers',
     valueName: (ctx) => ctx.game && ctx.game.executable,
     valueType: 'REG_SZ',
-    applyData: '~ DISABLEDXMAXIMIZEDWINDOWEDMODE',
+    applyData: '~ HIGHDPIAWARE DISABLEDXMAXIMIZEDWINDOWEDMODE',
     requires: (ctx) => Boolean(ctx.game && ctx.game.executable),
   },
   {
@@ -477,6 +482,73 @@ const catalog = [
     valueType: 'REG_SZ',
     applyData: 'GpuPreference=2;',
     requires: (ctx) => Boolean(ctx.game && ctx.game.executable),
+  },
+  {
+    id: 'game-defender-exclusion',
+    name: 'Excluir a pasta do FC 26 do Windows Defender',
+    description:
+      'Adiciona a pasta de instalação do jogo às exclusões oficiais do Windows Defender, evitando que a verificação em tempo real cause engasgos ao carregar ficheiros grandes (troca de estádio, replays, cutscenes). Usa a funcionalidade oficial Add-MpPreference/Remove-MpPreference — 100% reversível com um clique.',
+    category: 'game',
+    impact: 'medium',
+    default: false,
+    caution: true,
+    needsAdmin: true,
+    type: 'command',
+    applyCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: ['-NoProfile', '-NonInteractive', '-Command', `Add-MpPreference -ExclusionPath '${psEscape(ctx.game.installDir)}'`],
+    }),
+    revertCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: ['-NoProfile', '-NonInteractive', '-Command', `Remove-MpPreference -ExclusionPath '${psEscape(ctx.game.installDir)}' -ErrorAction SilentlyContinue`],
+    }),
+    statusCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `if ((Get-MpPreference).ExclusionPath -contains '${psEscape(ctx.game.installDir)}') { 'yes' } else { 'no' }`,
+      ],
+    }),
+    statusMatch: 'yes',
+    requires: (ctx) => Boolean(ctx.game && ctx.game.installDir),
+  },
+  {
+    id: 'game-qos-priority',
+    name: 'Prioridade de rede (QoS) dedicada ao FC26.exe',
+    description:
+      'Cria uma política de QoS oficial do Windows (New-NetQosPolicy) que marca o tráfego do processo do FC 26 com prioridade elevada (DSCP Expedited Forwarding), reduzindo picos de latência online causados por downloads/streaming em segundo plano. Não altera nenhum pacote do jogo — só a prioridade de saída do Windows. 100% reversível.',
+    category: 'game',
+    impact: 'medium',
+    default: false,
+    caution: true,
+    needsAdmin: true,
+    type: 'command',
+    applyCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `if (-not (Get-NetQosPolicy -Name 'FC26Optimizer' -ErrorAction SilentlyContinue)) { New-NetQosPolicy -Name 'FC26Optimizer' -AppPathNameMatchCondition '${psEscape(ctx.game.processName)}' -DSCPAction 46 -NetworkProfile All -Confirm:$false | Out-Null }`,
+      ],
+    }),
+    revertCmd: () => ({
+      cmd: 'powershell.exe',
+      args: ['-NoProfile', '-NonInteractive', '-Command', `Remove-NetQosPolicy -Name 'FC26Optimizer' -Confirm:$false -ErrorAction SilentlyContinue`],
+    }),
+    statusCmd: () => ({
+      cmd: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `if (Get-NetQosPolicy -Name 'FC26Optimizer' -ErrorAction SilentlyContinue) { 'yes' } else { 'no' }`,
+      ],
+    }),
+    statusMatch: 'yes',
+    requires: (ctx) => Boolean(ctx.game && ctx.game.processName),
   },
 
   /* ──────────────────────────────── Limpeza ───────────────────────────── */

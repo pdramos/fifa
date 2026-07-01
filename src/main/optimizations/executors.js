@@ -24,11 +24,30 @@ const ULTIMATE_PERF_TEMPLATE = 'e9a42b02-d5df-448d-aa00-03f14749eb61';
 
 /* --------------------------------------------------------------- registry */
 
+/**
+ * `reg query` reports DWORD/QWORD values in hex (e.g. "0x1"), while the
+ * catalog declares `applyData` in decimal (e.g. "1"). Compare both as
+ * numbers for numeric types so this doesn't perpetually read as "not
+ * applied" even right after a successful write.
+ */
+function normalizeRegValue(type, raw) {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (type === 'REG_DWORD' || type === 'REG_QWORD') {
+    const n = /^0x/i.test(s) ? parseInt(s, 16) : parseInt(s, 10);
+    return Number.isNaN(n) ? s.toLowerCase() : n;
+  }
+  return s.toLowerCase();
+}
+
+function regValuesEqual(type, a, b) {
+  return normalizeRegValue(type, a) === normalizeRegValue(type, b);
+}
+
 const registryExec = {
   async status(opt) {
     const cur = await regRead(opt.key, opt.valueName);
-    const applied =
-      cur.exists && String(cur.value).toLowerCase() === String(opt.applyData).toLowerCase();
+    const applied = cur.exists && regValuesEqual(opt.valueType, cur.value, opt.applyData);
     return { applied, current: cur.exists ? cur.value : null };
   },
   async apply(opt) {

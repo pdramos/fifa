@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -25,9 +34,16 @@ jobs:
       - name: Build Windows installer
         run: npm run dist
 
+      - name: Determine release tag
+        id: vars
+        shell: bash
+        run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
       - name: Upload to release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: "FC 26 Optimizer ${{ steps.vars.outputs.tag }}"
           files: dist/FC26-Optimizer-Setup.exe
           draft: false
           prerelease: false

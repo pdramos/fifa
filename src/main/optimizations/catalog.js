@@ -24,6 +24,9 @@
  * `reboot`: true                  — takes effect after a restart
  */
 
+const fs = require('fs');
+const path = require('path');
+
 const CATEGORIES = {
   windows: 'Windows',
   gpu: 'GPU',
@@ -32,12 +35,33 @@ const CATEGORIES = {
   cleanup: 'Limpeza',
   system: 'Sistema',
   storage: 'Armazenamento',
-  input: 'Rato & Input',
+  input: 'Comando & Input',
 };
 
 /** Escape a value for safe interpolation inside a single-quoted PowerShell string. */
 function psEscape(s) {
   return String(s || '').replace(/'/g, "''");
+}
+
+/**
+ * Candidate names for the game's own settings file. FC 26 writes
+ * "fcsetup.ini" in %LOCALAPPDATA%\EA SPORTS FC 26 (Windows hides the
+ * extension, so guides often call it just "fcsetup").
+ */
+const FCSETUP_CANDIDATES = ['fcsetup.ini', 'fcsetup', 'FCSETUP.INI'];
+
+/** Resolve the full path of fcsetup.ini for the detected install, or null. */
+function fcsetupPath(ctx) {
+  if (!ctx || !ctx.game || !ctx.game.settingsDir) return null;
+  for (const name of FCSETUP_CANDIDATES) {
+    const p = path.join(ctx.game.settingsDir, name);
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  return null;
 }
 
 const catalog = [
@@ -151,11 +175,11 @@ const catalog = [
   },
   {
     id: 'win-fso-per-exe',
-    name: 'Camadas de compatibilidade do FC26.exe (ecrã inteiro + DPI)',
+    name: 'Camadas de compatibilidade do FC26.exe (DPI + FSO)',
     description:
-      'Força ecrã inteiro exclusivo para o executável do jogo (menor latência do compositor) e desativa o escalamento automático de DPI do Windows (evita imagem desfocada/input impreciso em ecrãs com escala >100%). Pode não ser ideal em setups borderless com VRR.',
+      'Desativa o escalamento automático de DPI do Windows para o executável do jogo (evita imagem desfocada em ecrãs com escala >100%) e marca "desativar otimizações de ecrã inteiro". Nota honesta: o FC 26 é DX12, onde as "fullscreen optimizations" legadas já não se aplicam — o benefício real aqui é o DPI. Pode não ser ideal em setups borderless com VRR.',
     category: 'game',
-    impact: 'medium',
+    impact: 'low',
     default: false,
     caution: true,
     type: 'registry',
@@ -169,7 +193,7 @@ const catalog = [
     id: 'win-gamebar-full-off',
     name: 'Desligar completamente a Xbox Game Bar',
     description:
-      'Desativa o painel de arranque e o serviço Nexus da Game Bar, eliminando o overlay que consome recursos e adiciona latência de input.',
+      'Desativa o painel de arranque e o serviço Nexus da Game Bar, eliminando o overlay que consome recursos e adiciona latência de input. Atenção (CPUs AMD X3D de duplo CCD, ex.: 7950X3D): o estacionamento de núcleos depende da deteção de jogos da Game Bar — se notares stutter nesses CPUs, reverte esta otimização.',
     category: 'windows',
     impact: 'low',
     default: true,
@@ -195,11 +219,11 @@ const catalog = [
   },
   {
     id: 'win-fse-global',
-    name: 'Preferir ecrã inteiro exclusivo (global)',
+    name: 'Preferir ecrã inteiro exclusivo (global, jogos DX11)',
     description:
-      'Define as flags do Windows para respeitar o modo de ecrã inteiro exclusivo dos jogos (menor latência do compositor). Pode não ser ideal em setups borderless com VRR/G-Sync.',
+      'Define as flags GameDVR_FSE do Windows para respeitar o ecrã inteiro exclusivo. Nota honesta: este mecanismo legado só afeta jogos DX9/DX11 — no FC 26 (DX12) não tem efeito. Mantido para quem joga também títulos antigos. Pode não ser ideal em setups borderless com VRR/G-Sync.',
     category: 'windows',
-    impact: 'medium',
+    impact: 'low',
     default: false,
     caution: true,
     type: 'registry',
@@ -438,35 +462,146 @@ const catalog = [
   },
 
   /* ──────────────────────────────── Jogo (FC 26) ──────────────────────── */
+  /*
+   * fcsetup.ini tweaks — the game's OWN settings file (%LOCALAPPDATA%\
+   * EA SPORTS FC 26\fcsetup.ini). Editing it is the community-standard,
+   * EA-forum-recommended path with zero ban reports across FIFA/FC titles:
+   * the file lives OUTSIDE the game install dir and is exactly what the
+   * in-game menu writes. Every edit backs up the whole file first.
+   *
+   * Evidence for each key is documented in docs/RESEARCH.md.
+   */
+  {
+    id: 'cfg-strand-hair-off',
+    name: 'Desativar cabelo por fios (Strand Hair)',
+    description:
+      'Apontado nos fóruns da EA como o MAIOR consumidor de FPS do FC 26. O auto-detect do jogo volta a ativá-lo sozinho — é a causa conhecida da quebra de FPS após o intervalo e a abertura de packs. Define STRAND_BASED_HAIR = 0 no fcsetup.ini (com backup). Para o jogo não repor, ativa também "Proteger o fcsetup.ini contra reescrita".',
+    category: 'game',
+    impact: 'high',
+    default: true,
+    type: 'gameconfig',
+    file: FCSETUP_CANDIDATES,
+    settings: { STRAND_BASED_HAIR: '0' },
+    addIfMissing: false,
+    requires: (ctx) => Boolean(fcsetupPath(ctx)),
+  },
+  {
+    id: 'cfg-motion-blur-off',
+    name: 'Desativar motion blur no ficheiro do jogo',
+    description:
+      'Desliga o desfoque de movimento (MOTION_BLUR = 0) — liberta GPU e torna a imagem mais nítida em jogadas rápidas, reduzindo o input lag percecionado. Faz parte da correção comunitária da quebra de FPS pós-intervalo do FC 26.',
+    category: 'game',
+    impact: 'medium',
+    default: true,
+    type: 'gameconfig',
+    file: FCSETUP_CANDIDATES,
+    settings: { MOTION_BLUR: '0' },
+    addIfMissing: false,
+    requires: (ctx) => Boolean(fcsetupPath(ctx)),
+  },
+  {
+    id: 'cfg-fps-unlock',
+    name: 'Desbloquear o limite de 60 FPS do jogo',
+    description:
+      'O FC 26 vem travado a 60 FPS (TARGET_FRAME_RATE = 60 no fcsetup.ini). Define TARGET_FRAME_RATE e MAX_FRAME_RATE para a taxa do teu monitor (máx. 120 — há relatos de comportamento errático da engine com FPS muito altos). Mais FPS = menos latência de input. Recomendado: mantém também um cap no driver a refresh − 3.',
+    category: 'game',
+    impact: 'high',
+    default: true,
+    type: 'gameconfig',
+    file: FCSETUP_CANDIDATES,
+    settings: (ctx) => {
+      const hz = ctx.system && Number(ctx.system.refreshRateHz);
+      const v = Math.max(60, Math.min(120, Math.round(Number.isFinite(hz) && hz > 0 ? hz : 120)));
+      return { TARGET_FRAME_RATE: String(v), MAX_FRAME_RATE: String(v) };
+    },
+    addIfMissing: false,
+    requires: (ctx) => Boolean(fcsetupPath(ctx)),
+  },
+  {
+    id: 'cfg-refresh-rate-fix',
+    name: 'Corrigir bloqueio de 60 Hz (REFRESH_RATE)',
+    description:
+      'Bug conhecido do FC 24/25/26: o jogo prende-se a 60 Hz mesmo em monitores de 120/144+ Hz — 60 Hz significa mais latência de input. Escreve a taxa real do monitor detetado na chave REFRESH_RATE do fcsetup.ini. Só tem efeito em ecrã inteiro exclusivo.',
+    category: 'game',
+    impact: 'high',
+    default: true,
+    type: 'gameconfig',
+    file: FCSETUP_CANDIDATES,
+    settings: (ctx) => ({ REFRESH_RATE: String(Math.round(ctx.system.refreshRateHz)) }),
+    addIfMissing: false,
+    requires: (ctx) =>
+      Boolean(fcsetupPath(ctx)) &&
+      Boolean(ctx.system && Number(ctx.system.refreshRateHz) > 60),
+  },
   {
     id: 'cfg-vsync-off',
     name: 'Desativar V-Sync no ficheiro do jogo',
     description:
-      'Edita o ficheiro fcsetup do próprio jogo para desativar o V-Sync interno (recomendado quando se usa V-Sync/VRR do driver). Ficheiro copiado para backup antes de editar.',
+      'O V-Sync interno do FC tem má cadência de frames (consenso nos fóruns da EA/Steam) e adiciona latência. Define WAITFORVSYNC = 0 no fcsetup.ini e controla o tearing no driver (V-Sync do driver + G-Sync/FreeSync). Sem VRR nem cap de FPS podes notar tearing — por isso é opcional.',
     category: 'game',
     impact: 'medium',
     default: false,
     caution: true,
     type: 'gameconfig',
-    file: 'fcsetup',
-    settings: { VSYNC: '0' },
+    file: FCSETUP_CANDIDATES,
+    settings: { WAITFORVSYNC: '0' },
     addIfMissing: false,
-    requires: (ctx) => Boolean(ctx.game && ctx.game.settingsDir),
+    requires: (ctx) => Boolean(fcsetupPath(ctx)),
   },
   {
     id: 'cfg-msaa-off',
     name: 'Reduzir MSAA no ficheiro do jogo',
     description:
-      'Desativa o anti-aliasing MSAA no fcsetup para o maior ganho de FPS relacionado com AA. Só altera se a chave já existir.',
+      'Desativa o anti-aliasing MSAA (MSAA_LEVEL = 0) — a definição não aparece no menu do jogo, só é ajustável neste ficheiro. É o maior ganho de FPS relacionado com AA; pode aumentar ligeiramente o serrilhado.',
     category: 'game',
     impact: 'medium',
     default: false,
     caution: true,
     type: 'gameconfig',
-    file: 'fcsetup',
+    file: FCSETUP_CANDIDATES,
     settings: { MSAA_LEVEL: '0' },
     addIfMissing: false,
-    requires: (ctx) => Boolean(ctx.game && ctx.game.settingsDir),
+    requires: (ctx) => Boolean(fcsetupPath(ctx)),
+  },
+  {
+    id: 'cfg-lock-readonly',
+    name: 'Proteger o fcsetup.ini contra reescrita',
+    description:
+      'O jogo reescreve o fcsetup.ini no arranque e o auto-detect do FC 26 repõe definições pesadas (strand hair, motion blur) durante menus e o intervalo. Marca o ficheiro como só-de-leitura — o truque padrão da comunidade — para as tuas definições ficarem. Nota: enquanto ativo, o menu gráfico do jogo não guarda alterações; reverte primeiro se quiseres mexer nas definições dentro do jogo. Reversível com um clique.',
+    category: 'game',
+    impact: 'medium',
+    default: false,
+    caution: true,
+    type: 'command',
+    applyCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `Set-ItemProperty -LiteralPath '${psEscape(fcsetupPath(ctx))}' -Name IsReadOnly -Value $true`,
+      ],
+    }),
+    revertCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `Set-ItemProperty -LiteralPath '${psEscape(fcsetupPath(ctx))}' -Name IsReadOnly -Value $false`,
+      ],
+    }),
+    statusCmd: (ctx) => ({
+      cmd: 'powershell.exe',
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `(Get-ItemProperty -LiteralPath '${psEscape(fcsetupPath(ctx))}').IsReadOnly`,
+      ],
+    }),
+    statusMatch: '^True',
+    requires: (ctx) => Boolean(fcsetupPath(ctx)),
   },
   {
     id: 'game-gpu-preference',
@@ -662,9 +797,9 @@ const manualRecommendations = [
     vendor: 'nvidia',
     name: 'NVIDIA — perfil do FC26.exe (Painel de Controlo / NVIDIA App)',
     steps: [
-      'Modo de baixa latência: Ultra',
+      'Modo de baixa latência: Ultra — o FC NÃO tem NVIDIA Reflex nativo; este é o substituto que reduz a fila de frames da GPU (menos input lag). Há relatos no fórum da EA de latência de render a cair de 30–40 ms para 3–10 ms com Ultra + cap de FPS',
+      'Taxa de frames máxima: refresh do monitor − 3 (ex.: 141 para 144 Hz) — o limitador interno do FC tem má cadência; limita SEMPRE no driver',
       'Modo de gestão de energia: Preferir desempenho máximo',
-      'Taxa de frames máxima: refresh do monitor − 3 (ex.: 141 para 144 Hz) quando usa G-Sync/VRR',
       'V-Sync (driver): Ligado + G-Sync ativado; V-Sync no jogo: Desligado',
       'Filtragem de texturas — Qualidade: Alto desempenho',
       'Tamanho da cache de shaders: Ilimitado (ou 10 GB)',
@@ -698,8 +833,21 @@ const manualRecommendations = [
       'Ray tracing: Desligado (grande ganho de FPS no FC 26)',
       'Detalhe de multidão / qualidade da relva: Médio',
       'Qualidade de sombras/reflexos: Médio (as sombras são das definições mais pesadas)',
-      'Limite de FPS: ~90–120, ou refresh − 3 com VRR (a engine do FC pode ficar instável em FPS muito altos)',
+      'Limite de FPS: NÃO uses o limitador interno do jogo (má cadência de frames, consenso da comunidade) — limita no driver a refresh − 3; a engine fica errática acima de ~120–190 FPS',
       'Anti-aliasing: TAA (bom equilíbrio) — evita MSAA alto, que é muito pesado',
+    ],
+  },
+  {
+    id: 'input-controller-fix',
+    category: 'input',
+    name: 'Comando (controlador) — eliminar input delay [evidência forte p/ FC]',
+    steps: [
+      'EA app → Definições → Aplicação → desliga o "In-Game Overlay" — há um bug reportado no FC 26 (fórum da EA) em que o overlay + subsistema de input do Windows causam input lag e micro-stutter durante o jogo',
+      'Steam: clica no FC 26 → Propriedades → Comando → "Desativar Steam Input" — corrige o atraso do comando e o bug de input duplo reportado no FC 25/26',
+      'NÃO uses DS4Windows/remapeadores com o FC: o EA Anti-Cheat pode expulsar-te da sessão, e criam input duplo (comando real + virtual)',
+      'Usa o comando COM FIOS numa porta USB da motherboard (não num hub) — corrige o atraso de reconhecimento reportado no FC 26',
+      'Fecha overlays antes de jogar: Xbox Game Bar, Discord, GeForce/NVIDIA App',
+      'Avançado (só se o resto não chegar): parar o serviço "GameInputSvc" do Windows antes de jogar e reativar depois — workaround documentado para o bug de polling do FC 26, mas outros jogos precisam dele',
     ],
   },
   {
@@ -708,7 +856,7 @@ const manualRecommendations = [
     name: 'EA app / launcher — reduzir sobrecarga',
     steps: [
       'Definições da EA app → Aplicação → desliga "Iniciar o EA no arranque do Windows"',
-      'Desliga o overlay da EA (In-Game Overlay) nas definições da EA app — reduz stuttering e input lag',
+      'Desliga o overlay da EA (In-Game Overlay) — é a correção de input lag com evidência mais forte no FC 26: bug reportado no fórum da EA em que o overlay provoca polling redundante de dispositivos e stutter/atraso de input durante as partidas',
       'Fecha a EA app e o browser antes de jogar (libertam RAM e CPU)',
       'Verifica a integridade dos ficheiros do jogo pela EA app se tiveres crashes (Reparar) — é oficial e seguro',
       'No Steam/Epic: desativa igualmente o respetivo overlay para o FC 26',
@@ -779,6 +927,7 @@ const manualRecommendations = [
     steps: [
       'Instalação limpa do driver GPU com DDU em Modo de Segurança (resolve conflitos de perfis/shaders)',
       'Reparar o EA Anti-Cheat pelo instalador oficial em <jogo>\\__Installer\\EAAntiCheat\\ (é uma reparação oficial, não um bypass)',
+      'Stutter persistente: repõe as definições locais do jogo — fecha o jogo, FAZ BACKUP e apaga a pasta "settings" em %LOCALAPPDATA%\\EA SPORTS FC 26 (perde câmaras/definições locais; o jogo regenera-as). Correção recorrente do bug de stutter herdado do FC 24/25',
       'Esvaziar a lista de standby de memória com o RAMMap da Microsoft se a RAM em standby estiver saturada',
     ],
   },

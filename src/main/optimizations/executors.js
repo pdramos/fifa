@@ -224,12 +224,48 @@ const commandExec = {
  * restore.
  */
 const gameConfigExec = {
+  /**
+   * `opt.file` may be a single name or a list of candidates (FC 26 ships the
+   * file as "fcsetup.ini"; Windows hides the extension, so guides often call
+   * it just "fcsetup"). The first candidate that exists on disk wins.
+   */
   _resolveFile(opt, ctx) {
     if (!ctx.game || !ctx.game.settingsDir) return null;
-    return path.join(ctx.game.settingsDir, opt.file);
+    const names = Array.isArray(opt.file) ? opt.file : [opt.file];
+    for (const name of names) {
+      const p = path.join(ctx.game.settingsDir, name);
+      if (fs.existsSync(p)) return p;
+    }
+    return null;
   },
   _read(file) {
     return fs.readFileSync(file, 'utf8');
+  },
+  /**
+   * The community "read-only trick" marks fcsetup.ini read-only so the game
+   * can't rewrite it on launch. Our own edits must still work in that state,
+   * so writes temporarily lift the attribute and put it back afterwards. On
+   * Windows, chmod maps the write bit onto the READONLY file attribute.
+   */
+  _withWritable(file, fn) {
+    let wasReadOnly = false;
+    try {
+      wasReadOnly = (fs.statSync(file).mode & 0o200) === 0;
+    } catch (_) {
+      /* stat failed — let fn surface the real error */
+    }
+    if (wasReadOnly) fs.chmodSync(file, 0o666);
+    try {
+      return fn();
+    } finally {
+      if (wasReadOnly) {
+        try {
+          fs.chmodSync(file, 0o444);
+        } catch (_) {
+          /* best effort */
+        }
+      }
+    }
   },
   _setKey(text, key, value, addIfMissing) {
     const lines = text.split(/\r?\n/);
@@ -254,27 +290,38 @@ const gameConfigExec = {
   },
   async status(opt, ctx) {
     const file = this._resolveFile(opt, ctx);
-    if (!file || !fs.existsSync(file)) return { applied: false, current: 'no-file' };
+    if (!file) return { applied: false, current: 'no-file' };
     const text = this._read(file);
-    const applied = Object.entries(opt.settings).every(
+    // Only keys that exist in the file count towards "applied" when the entry
+    // refuses to invent keys (addIfMissing: false) — otherwise a build whose
+    // config lacks an optional key would read as perpetually "not applied".
+    const entries = Object.entries(opt.settings).filter(
+      ([k]) => opt.addIfMissing || this._getKey(text, k) !== null
+    );
+    if (!entries.length) return { applied: false, current: 'no-keys' };
+    const applied = entries.every(
       ([k, v]) => String(this._getKey(text, k)).toLowerCase() === String(v).toLowerCase()
     );
     return { applied, current: file };
   },
   async apply(opt, ctx) {
     const file = this._resolveFile(opt, ctx);
-    if (!file || !fs.existsSync(file)) {
+    if (!file) {
       throw new Error('Ficheiro de configuração do jogo não encontrado.');
     }
     const backupPath = backupManager.snapshotFile(file);
     let text = this._read(file);
-    for (const [k, v] of Object.entries(opt.settings)) text = this._setKey(text, k, v);
-    fs.writeFileSync(file, text);
+    for (const [k, v] of Object.entries(opt.settings)) {
+      text = this._setKey(text, k, v, opt.addIfMissing);
+    }
+    this._withWritable(file, () => fs.writeFileSync(file, text));
     return { backupPath, file };
   },
   async revert(opt, backup) {
     if (backup && backup.backupPath && backup.file) {
-      backupManager.restoreFile(backup.backupPath, backup.file);
+      this._withWritable(backup.file, () =>
+        backupManager.restoreFile(backup.backupPath, backup.file)
+      );
     }
   },
 };

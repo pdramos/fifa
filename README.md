@@ -37,9 +37,13 @@ ajustes oficiais do Windows, da GPU e das definições do próprio jogo.
 ## ✨ Funcionalidades
 
 - **Análise automática** — deteta o FC 26 (EA app, Steam, Epic), localiza o
-  `fcsetup` e faz o diagnóstico do hardware (CPU, RAM, GPU, plano de energia).
-- **Motor de otimizações modular** — 35+ otimizações seguras, orientadas a dados,
-  organizadas por categoria (Windows, Sistema, Rede, Jogo, Rato & Input, Limpeza).
+  `fcsetup.ini` e faz o diagnóstico do hardware (CPU, RAM, GPU, monitor, plano de energia).
+- **Motor de otimizações modular** — 45 otimizações seguras, orientadas a dados,
+  organizadas por categoria (Windows, Sistema, Rede, Jogo, Comando & Input, Limpeza).
+- **Foco em FPS & input lag reais** — desbloqueio do limite de 60 FPS do FC 26,
+  correção do bug de 60 Hz, strand hair off (o maior FPS-killer do jogo) e
+  proteção do `fcsetup.ini` contra reescrita. Racional e fontes de cada tweak
+  documentados em [docs/RESEARCH.md](docs/RESEARCH.md).
 - **Perfis** — Seguro, Equilibrado, Desempenho Máximo, Competitivo (online) e
   Tudo (avançado), além de **perfis personalizados**.
 - **Backups & Restauro** — cada alteração guarda o valor original; pontos de
@@ -138,8 +142,8 @@ src/
 | **Windows** | Modo de Jogo, HAGS, plano *Desempenho Máximo*, efeitos visuais, Game Bar/DVR, notificações, ecrã inteiro exclusivo, atraso de arranque |
 | **Sistema** | Perfil MMCSS de jogos (categoria *High*), System Responsiveness, Power Throttling, SysMain, prioridade de CPU do FC 26, `Win32PrioritySeparation`, apps em segundo plano, telemetria, hibernação/Fast Startup |
 | **Rede** | Limpar DNS, TCP auto-tuning |
-| **Jogo (FC 26)** | GPU dedicada + *Alto Desempenho* para o FC 26, V-Sync e MSAA no `fcsetup` (com backup) |
-| **Rato & Input** | Desativar aceleração do rato (input 1:1) |
+| **Jogo (FC 26)** | Desbloqueio do limite de 60 FPS, correção do bug de 60 Hz, *strand hair* off, motion blur off, V-Sync e MSAA no `fcsetup.ini` (sempre com backup), proteção do ficheiro contra reescrita, GPU dedicada + *Alto Desempenho* |
+| **Comando & Input** | Desativar aceleração do rato (input 1:1); guia anti-input-delay do comando (overlay EA, Steam Input, DS4Windows, USB) |
 | **Limpeza** | Cache de shaders DirectX/NVIDIA/AMD, cache da Store/UWP, temporários, crash dumps, cache da app EA |
 | **Manuais** | Definições in-game do FC 26, EA app/overlays, monitor/VRR, processos em segundo plano, painel NVIDIA/AMD, DNS rápido, SSD, DDU, reparação do EAAC |
 

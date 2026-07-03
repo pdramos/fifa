@@ -49,12 +49,16 @@ async function collect() {
 
   try {
     const gpu = await psJson(
-      "Get-CimInstance Win32_VideoController | Select-Object -First 1 Name,DriverVersion,AdapterRAM"
+      "Get-CimInstance Win32_VideoController | Select-Object -First 1 Name,DriverVersion,AdapterRAM,CurrentRefreshRate"
     );
     if (gpu) {
       base.gpu = gpu.Name || null;
       base.gpuDriver = gpu.DriverVersion || null;
       if (gpu.AdapterRAM) base.gpuVramGB = bytesToGB(gpu.AdapterRAM);
+      // Current display refresh rate (Hz) — used by the fcsetup REFRESH_RATE
+      // fix, which needs the monitor's real rate to unlock the 60 Hz bug.
+      const hz = Number(gpu.CurrentRefreshRate);
+      if (Number.isFinite(hz) && hz >= 24 && hz <= 1000) base.refreshRateHz = hz;
       const name = (gpu.Name || '').toLowerCase();
       base.gpuVendor = name.includes('nvidia')
         ? 'nvidia'

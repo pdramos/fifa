@@ -5,15 +5,15 @@
 
 **Otimizador profissional, seguro e modular para o EA SPORTS FC 26**
 
-[![Release](https://img.shields.io/github/v/release/pepevapovapo/fifa?label=vers%C3%A3o&color=16d67a&style=for-the-badge)](https://github.com/pepevapovapo/fifa/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/pepevapovapo/fifa/total?label=downloads&color=f5c542&style=for-the-badge)](https://github.com/pepevapovapo/fifa/releases/latest)
-[![Platform](https://img.shields.io/badge/plataforma-Windows%2010%2F11-0aa85e?style=for-the-badge&logo=windows)](https://github.com/pepevapovapo/fifa/releases/latest)
+[![Release](https://img.shields.io/github/v/release/pdramos/fifa?label=vers%C3%A3o&color=16d67a&style=for-the-badge)](https://github.com/pdramos/fifa/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/pdramos/fifa/total?label=downloads&color=f5c542&style=for-the-badge)](https://github.com/pdramos/fifa/releases/latest)
+[![Platform](https://img.shields.io/badge/plataforma-Windows%2010%2F11-0aa85e?style=for-the-badge&logo=windows)](https://github.com/pdramos/fifa/releases/latest)
 [![Ban Risk](https://img.shields.io/badge/risco%20de%20ban-0%25-16d67a?style=for-the-badge)](#-0-risco-de-ban--garantido-por-design)
 [![License](https://img.shields.io/badge/licença-MIT-8896ad?style=for-the-badge)](#)
 
 <br>
 
-### 📥 [**DESCARREGAR FC 26 OPTIMIZER**](https://github.com/pepevapovapo/fifa/releases/latest/download/FC26-Optimizer-Setup.exe)
+### 📥 [**DESCARREGAR FC 26 OPTIMIZER**](https://github.com/pdramos/fifa/releases/latest/download/FC26-Optimizer-Setup.exe)
 
 *(Windows 10/11 · instalador `.exe` · basta descarregar e instalar)*
 
@@ -61,7 +61,7 @@ ajustes oficiais do Windows, da GPU e das definições do próprio jogo.
 
 ### Opção 1 — Instalar (recomendado)
 
-1. [**Descarrega o instalador**](https://github.com/pepevapovapo/fifa/releases/latest/download/FC26-Optimizer-Setup.exe) mais recente.
+1. [**Descarrega o instalador**](https://github.com/pdramos/fifa/releases/latest/download/FC26-Optimizer-Setup.exe) mais recente.
 2. Faz duplo-clique em `FC26-Optimizer-Setup.exe` e segue os passos.
 3. Abre o **FC 26 Optimizer** — aceita o pedido de Administrador do Windows.
 

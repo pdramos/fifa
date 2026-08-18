@@ -45,7 +45,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "pepevapovapo",
+        "owner": "pdramos",
         "repo": "fifa"
       }
     ]

@@ -12,7 +12,7 @@
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/pepevapovapo/fifa
+git clone https://github.com/pdramos/fifa
 cd fifa
 ```
 
